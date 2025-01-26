@@ -1,22 +1,27 @@
 import express from "express";
+import cors from "cors";
+
 import tokenService from "./services/token.service";
 import { LoginRequest } from "./types/auth.types";
 
 export const app = express();
 app.use(express.json());
+app.use(cors({ origin: "http://localhost:5173" }));
 
-app.post("/api/token", async (req, res) => {
+app.post("/api/token", async (req: express.Request, res: express.Response) => {
   const { email, password } = req.body as LoginRequest;
 
   if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required" });
+    res.status(400).json({ error: "Email and password are required" });
+    return;
   }
 
   if (
     email !== process.env.VALID_EMAIL ||
     password !== process.env.VALID_PASSWORD
   ) {
-    return res.status(401).json({ error: "Invalid credentials" });
+    res.status(401).json({ error: "Invalid credentials" });
+    return;
   }
 
   try {
