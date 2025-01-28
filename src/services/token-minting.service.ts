@@ -87,6 +87,26 @@ class TokenMintingService {
       throw error;
     }
   }
+
+  public async checkMintStatus(mintId: string): Promise<TokenMintResponse> {
+    try {
+      const headers = await this.getHeaders();
+      const response = await axios.get<TokenMintResponse>(
+        `${this.baseUrl}/tokens/mints/${mintId}`,
+        { headers }
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Mint status check failed: ${JSON.stringify(
+            error.response?.data || error.message
+          )}`
+        );
+      }
+      throw error;
+    }
+  }
 }
 
 export default new TokenMintingService();
