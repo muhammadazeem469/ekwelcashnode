@@ -5,19 +5,33 @@ import tokenService from "./services/token.service";
 import { LoginRequest } from "./types/auth.types";
 
 export const app = express();
-app.use(express.json());
+
+// CORS configuration
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
-    credentials: true,
+    origin: "*", // Or specify your frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With",
+    ],
+    credentials: true,
+    optionsSuccessStatus: 200,
   })
 );
 
+app.use(express.json());
+
+// Pre-flight requests
+app.options("*", cors());
+
 // Auth endpoint
 app.post("/api/token", async (req: express.Request, res: express.Response) => {
-  console.log("Auth request received:", req.body); // Add logging
+  console.log("Auth request received:", req.body);
+  console.log("Request headers:", req.headers);
 
   const { email, password } = req.body as LoginRequest;
 
@@ -39,6 +53,18 @@ app.post("/api/token", async (req: express.Request, res: express.Response) => {
   try {
     const token = await tokenService.getToken();
     console.log("Token generated successfully");
+
+    // Set CORS headers explicitly
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, Accept"
+    );
+
     res.json({ access_token: token });
   } catch (error) {
     console.error("Token generation error:", error);
@@ -63,3 +89,8 @@ app.use(
     res.status(500).json({ error: err.message || "Internal server error" });
   }
 );
+
+// Handle 404
+app.use((req: express.Request, res: express.Response) => {
+  res.status(404).json({ error: "Not found" });
+});
