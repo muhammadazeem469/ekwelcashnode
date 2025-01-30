@@ -13,10 +13,13 @@ export interface ContractDeploymentResponse {
     name: string;
     description: string;
     id: string;
+    address?: string; // Added this
     chain: string;
     symbol: string;
     externalUrl: string;
     image: string;
+    imageUrl: string; // Added this
+    image_url: string; // Added this
     media: any[];
     transactionHash: string;
     status: string;
@@ -115,7 +118,9 @@ export interface TokenMintResponse {
 // Status Check Response Types
 export interface ContractStatusResponse {
   success: boolean;
-  result: ContractDeploymentResponse["result"];
+  result: Omit<ContractDeploymentResponse["result"], "address"> & {
+    address: string; // Making address required in status response
+  };
 }
 
 export interface TokenCreationStatusResponse {

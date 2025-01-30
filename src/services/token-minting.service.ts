@@ -1,3 +1,5 @@
+// src/services/token-minting.service.ts
+
 import axios from "axios";
 import {
   TokenCreationRequest,
@@ -27,10 +29,20 @@ class TokenMintingService {
       const headers = await this.getHeaders();
       const response = await axios.post<TokenCreationResponse>(
         `${this.baseUrl}/token-types/creations`,
-        creationData,
+        {
+          ...creationData,
+          creations: creationData.creations.map((creation) => ({
+            ...creation,
+            imagePreview: creation.image,
+            imageThumbnail: creation.image,
+          })),
+        },
         { headers }
       );
-      return response.data;
+
+      // Ensure all image fields are present in the response
+      const enrichedResponse = this.enrichImageFields(response.data);
+      return enrichedResponse;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(
@@ -52,7 +64,7 @@ class TokenMintingService {
         `${this.baseUrl}/token-types/creations/${creationId}`,
         { headers }
       );
-      return response.data;
+      return this.enrichImageFields(response.data);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(
@@ -75,7 +87,7 @@ class TokenMintingService {
         mintData,
         { headers }
       );
-      return response.data;
+      return this.enrichImageFields(response.data);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(
@@ -95,7 +107,7 @@ class TokenMintingService {
         `${this.baseUrl}/tokens/mints/${mintId}`,
         { headers }
       );
-      return response.data;
+      return this.enrichImageFields(response.data);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(
@@ -106,6 +118,26 @@ class TokenMintingService {
       }
       throw error;
     }
+  }
+
+  private enrichImageFields<T extends { result: any }>(response: T): T {
+    if (response?.result?.metadata?.contract) {
+      const contract = response.result.metadata.contract;
+      if (contract.image && !contract.imageUrl) {
+        contract.imageUrl = contract.image;
+        contract.image_url = contract.image;
+      }
+    }
+
+    if (response?.result?.metadata) {
+      const metadata = response.result.metadata;
+      if (metadata.image && !metadata.imagePreview) {
+        metadata.imagePreview = metadata.image;
+        metadata.imageThumbnail = metadata.image;
+      }
+    }
+
+    return response;
   }
 }
 
